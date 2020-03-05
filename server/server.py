@@ -1,5 +1,6 @@
 import os.path
 from flask import render_template, send_file, g
+from flask_caching import Cache
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import OperationalError
@@ -39,13 +40,17 @@ app.add_api('board.swagger')
 
 
 # format is driver://user:pass@host/database
-engine = create_engine('sqlite:///' + os.path.join(dir, "board.sqlite"), echo=True)
+engine = create_engine('sqlite:///' + os.path.join(dir, "board.sqlite"), echo=False)
 Session = sessionmaker(bind=engine)
+
+cache = Cache(config={'CACHE_TYPE': 'simple'})
+cache.init_app(app.app)
 
 
 @app.app.before_request
 def setup_session () :
     g.session = Session()
+    g.cache = cache
 
 @app.route('/')
 def home():
