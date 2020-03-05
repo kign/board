@@ -151,22 +151,9 @@ const board = (function () {
     return move_sprite(x1, y1);
   });
 
-  // const move = (x1, y1) => funwrapper(() => {
-  //   if (x1 < 1 || x1 > X || y1 < 1 || y1 > Y)
-  //     return 1;
-  //   if (has_block(x1,y1))
-  //     return 2;
-  //   const x0 = sx, y0 = sy;
-  //   fcell (c_trace, x0, y0);
-  //   fcell (c_sprite,  x1, y1);
-  //   sx = x1;
-  //   sy = y1;
-  //   return 0;
-  // });
-
-  const metronom_on = function () {
+  const metronom_on = function (interval) {
     if (!metronom_interval) {
-      metronom_interval = setInterval(metronom_action, 500);
+      metronom_interval = setInterval(metronom_action, interval);
       console.log("metronom_interval on");
     }
   }
@@ -215,7 +202,7 @@ const board = (function () {
   }
 
   return {
-  	init: function(id, run) {
+  	init: function(id, interval, run) {
       // setup canvas
       cvas = document.getElementById(id);
       W = cvas.width;
@@ -226,7 +213,7 @@ const board = (function () {
       draw_new_board ();
 
       // initialize periodic wakeup events
-      metronom_on ();
+      metronom_on (interval);
 
       let action = this.action;
       cvas.onclick = function(e){
