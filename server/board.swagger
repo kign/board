@@ -13,6 +13,7 @@ basePath: /api
 
 # Helpful links:
 # https://swagger.io/docs/specification/describing-parameters/
+# https://swagger.io/docs/specification/describing-responses/
 # https://editor.swagger.io/
 
 paths:
@@ -56,10 +57,32 @@ paths:
       operationId: board.api_reset
       responses:
         200:
-          description: No value
-          type: void
+          description: OK!
 
-  /
+  /put-sprite:
+    post:
+      operationId: board.api_put_sprite
+      parameters:
+        - name: sprite
+          in: body
+          description: sprite
+          required: true
+          schema:
+            $ref: '#/definitions/Sprite'
+      responses:
+        200:
+          description: OK!
+
+
+  /get-sprite:
+    get:
+      operationId: board.api_get_sprite
+      responses:
+        200:
+          description: sprite
+          schema:
+            $ref: '#/definitions/Sprite'
+
 
 definitions:
 
@@ -74,5 +97,14 @@ definitions:
         type: integer
       blocked:
         type: boolean
+
+  Sprite:
+    type: object
+    properties:
+      x:
+        type: integer
+      y:
+        type: integer
+
 
 
