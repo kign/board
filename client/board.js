@@ -134,7 +134,7 @@ const board = (function () {
     ctx.fillRect(pad + (x - 1) * (spc+box), pad + (Y - y) * (spc+box), box, box);
   }
 
-  const move = (x1, y1) => funwrapper(() => {
+  const move_sprite = function(x1, y1) {
     if (x1 < 1 || x1 > X || y1 < 1 || y1 > Y)
       return 1;
     if (has_block(x1,y1))
@@ -145,7 +145,24 @@ const board = (function () {
     sx = x1;
     sy = y1;
     return 0;
+  }
+
+  const move_promise = (x1, y1) => funwrapper(() => {
+    return move_sprite(x1, y1);
   });
+
+  // const move = (x1, y1) => funwrapper(() => {
+  //   if (x1 < 1 || x1 > X || y1 < 1 || y1 > Y)
+  //     return 1;
+  //   if (has_block(x1,y1))
+  //     return 2;
+  //   const x0 = sx, y0 = sy;
+  //   fcell (c_trace, x0, y0);
+  //   fcell (c_sprite,  x1, y1);
+  //   sx = x1;
+  //   sy = y1;
+  //   return 0;
+  // });
 
   const metronom_on = function () {
     if (!metronom_interval) {
@@ -168,11 +185,24 @@ const board = (function () {
 
     if (bcontrol.is_server_mode())
       sync_blocks ();
+
+    if (bcontrol.is_active_server_mode() && sprite_state == "running")
+      bserver.put_sprite(sx, sy);
+
+    if (bcontrol.is_passive_server_mode())
+      bserver.get_sprite((x, y) => {
+        if (x && y)
+          move_sprite(x,y);
+        else
+          console.log("Received no sprite info!");
+      });
   }
 
   const set_sprite_state = function (state) {
     if (sprite_state == "aborted" && state == "stopped")
-      bcontrol.sprite_stop_complete();
+      bcontrol.sprite_stop_completed();
+    else if (state == "stopped")
+      bcontrol.sprite_stopped();
     else if (state == "running")
       bcontrol.sprite_started();
     else if (state == "paused")
@@ -250,19 +280,23 @@ const board = (function () {
     },
 
     move_right: async function () {
-      return move (sx+1, sy);
+      return move_promise (sx+1, sy);
     },
 
     move_left: async function () {
-      return move (sx-1, sy);
+      return move_promise (sx-1, sy);
     },
 
     move_up: function () {
-      return move (sx, sy+1);
+      return move_promise (sx, sy+1);
     },
 
     move_down: async function () {
-      return move (sx, sy-1);
+      return move_promise (sx, sy-1);
+    },
+
+    done: function () {
+      set_sprite_state("stopped");
     },
 
     is_sprite_active: function () {

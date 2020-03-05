@@ -1,7 +1,7 @@
 const bcontrol = (function () {
 	'use strict';
 
-  	var server_mode = "active";
+  	var server_mode = "offline" // "active", "passive"
 
 	const set_mode_low = function (mode, active) {
 		const e = document.getElementById('m_' + mode)
@@ -18,14 +18,19 @@ const bcontrol = (function () {
 	const server_mode_click = function (mode) {
 		console.log(`server_mode_click(${mode})`);
 
-
-		if (mode == "passive" && board.is_sprite_active())
+		if (mode == server_mode)
+			alert("Already " + mode);
+		else if (mode == "passive" && board.is_sprite_active())
 			alert("Can't switch to passive, stop first");
-		if (mode != "offline" && !bserver.get_server_online())
+		else if (mode != "offline" && !bserver.get_server_online())
 			alert("Server is offline");
 		else if (mode == "reset")
 			bserver.reset ();
 		else {
+			if (mode == "passive")
+				set_run_controls("passive");
+			else if(["active", "offline"].includes(mode) && server_mode == "passive")
+				set_run_controls("stopped");
 			server_mode = mode;
 			bcontrol.set_server_mode_ui(mode);
 		}
@@ -70,6 +75,12 @@ const bcontrol = (function () {
 				b.style.color = "white";
 			});
 		}
+		else if (state == "passive") {
+			restore();
+			run.disabled = true;
+			pause.disabled = true;
+			stop.disabled = true;
+		}
 		else
 			alert("set_run_controls(" + state + ")");
 	}
@@ -104,11 +115,15 @@ const bcontrol = (function () {
 			set_run_controls("paused");
 		},
 
+		sprite_stopped : function() {
+			set_run_controls("stopped");
+		},
+
 		sprite_stop_initiated : function() {
 			set_run_controls("abort");
 		},
 
-		sprite_stop_complete : function() {
+		sprite_stop_completed : function() {
 			set_run_controls("stopped");
 		},
 
