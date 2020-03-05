@@ -1,0 +1,28 @@
+<canvas id="myCanvas" width="500" height="500" style="border:1px solid #000000;"></canvas>
+<div>
+	<button id="c_run">Run</button>
+	<button id="c_pause">Pause</button>
+	<button id="c_stop">Stop</button>
+</div>
+<div>
+	<table>
+		<tr>
+			<td>Server</td>
+			<td id="s_on" style="background-color: green; color: white; display: none">Available</td>
+			<td id="s_off" style="background-color: red; color: white; display: none" title="click to test">Offlile</td>
+			<td id="s_unknown" style="background-color: grey; color: white" title="click to test">Unknown</td>
+			<td id="s_testing" style="background-color: blue; color: white; display: none">Testing...</td>
+
+			<td style="padding-left: 6em;">Mode</td>
+			<td id="m_active" data-active-bg="green" style="color: grey">Active</td>
+			<td id="m_passive" data-active-bg="blue" style="color: grey">Passive</td>
+			<td id="m_offline" data-active-bg="black" style="color: grey">Offline</td>
+			<td id="m_reset" data-active-bg="red" style="color: grey">Reset</td>
+		</tr>
+	</table>
+</div>
+
+<script src="bserver.js"></script>
+<script src="bcontrol.js"></script>
+<script src="board.js"></script>
+<script src="test.js"></script>

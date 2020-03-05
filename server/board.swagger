@@ -1,0 +1,78 @@
+swagger: "2.0"
+
+info:
+  description: Board swagger file
+  version: "1.0.0"
+  title: Board swagger
+consumes:
+  - "application/json"
+produces:
+  - "application/json"
+
+basePath: /api
+
+# Helpful links:
+# https://swagger.io/docs/specification/describing-parameters/
+# https://editor.swagger.io/
+
+paths:
+  /timetest:
+    get:
+      operationId: misc.timetest
+      parameters:
+        - name: clientUTCtime
+          description: client time in ...
+          required: true
+          type: integer
+          in: query
+      responses:
+        200:
+          description: time delta
+          schema:
+            type: integer
+
+  /blocks:
+    post:
+      operationId: board.api_blocks
+      parameters:
+        - name: clientBlocks
+          in: body
+          description: client's latest blocks
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Block'
+      responses:
+        200:
+          description: delta to be applied to blocks
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Block'
+
+  /reset:
+    post:
+      operationId: board.api_reset
+      responses:
+        200:
+          description: No value
+          type: void
+
+  /
+
+definitions:
+
+  Block:
+    type: object
+    properties:
+      x:
+        type: integer
+      y:
+        type: integer
+      ts:
+        type: integer
+      blocked:
+        type: boolean
+
+

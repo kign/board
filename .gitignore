@@ -1,0 +1,4 @@
+__pycache__/
+server/board.sqlite
+venv/
+venv3/
