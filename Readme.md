@@ -1,7 +1,8 @@
 Initial `venv` initialization
 
 ```bash
-pip install flask flask_cors flask-jsonpify flask-sqlalchemy flask-restful Flask-Caching 'connexion[swagger-ui]'
+pip install flask flask_cors flask-jsonpify flask-sqlalchemy flask-restful \
+     Flask-Caching 'connexion[swagger-ui]'
 ```
 
 Links:
@@ -21,7 +22,7 @@ Apache config
   LogLevel warn
   CustomLog /var/log/apache2/board_access.log combined
 
-  ServerName board.zapad.org
+  ServerName board.[server]
   ProxyPreserveHost On
   ProxyRequests Off
   <Location />
@@ -30,9 +31,11 @@ Apache config
     Header set Access-Control-Allow-Origin "*"
     Header set Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept"
   </Location>
-SSLCertificateFile /etc/letsencrypt/live/board.zapad.org/fullchain.pem
-SSLCertificateKeyFile /etc/letsencrypt/live/board.zapad.org/privkey.pem
+SSLCertificateFile /etc/letsencrypt/live/board.[server]/fullchain.pem
+SSLCertificateKeyFile /etc/letsencrypt/live/board.[server]/privkey.pem
 Include /etc/letsencrypt/options-ssl-apache.conf
 </VirtualHost>
 </IfModule>
 ```
+
+You can test Swagger UI using this URL: http://[server]:8020/api/ui/
