@@ -44,8 +44,8 @@ def api_blocks(clientBlocks) :
 	return res
 
 def api_reset() :
-	g.session.query(Block).delete();
-
+	g.session.query(Block).delete()
+	g.session.commit()
 
 def api_put_sprite(sprite) :
 	print(f"Saving sprite({sprite['x']},{sprite['y']})")
