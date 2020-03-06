@@ -24,16 +24,25 @@ const bcontrol = (function () {
 			alert("Can't switch to passive, stop first");
 		else if (mode != "offline" && !bserver.get_server_online())
 			alert("Server is offline");
-		else if (mode == "reset")
-			bserver.reset ();
+		else if (mode == "reset") {
+			set_mode_low("reset", true);
+			board.reset_blocks();
+			bserver.reset (() => set_mode_low("reset", false));
+		}
 		else {
 			if (mode == "passive")
 				set_run_controls("passive");
 			else if(["active", "offline"].includes(mode) && server_mode == "passive")
 				set_run_controls("stopped");
 			server_mode = mode;
-			bcontrol.set_server_mode_ui(mode);
+			set_server_mode_ui(mode);
 		}
+	}
+
+	const set_server_mode_ui = function(mode) {
+		["active", "passive", "offline"].forEach(m => {
+			set_mode_low(m, m == mode);
+		});
 	}
 
 	const set_run_controls = function (state) {
@@ -101,12 +110,6 @@ const bcontrol = (function () {
 			});
 		},
 
-		set_server_mode_ui: function(mode) {
-			["active", "passive", "offline"].forEach(m => {
-				set_mode_low(m, m == mode);
-			});
-		},
-
 		sprite_started : function() {
 			set_run_controls("running");
 		},
@@ -143,11 +146,11 @@ const bcontrol = (function () {
 		refresh : function() {
 			if (bserver.get_server_online()) {
 				this.set_server_status("on");
-				this.set_server_mode_ui(server_mode);
+				set_server_mode_ui(server_mode);
 			}
 			else {
 				this.set_server_status("off");
-				this.set_server_mode_ui("undefined");
+				set_server_mode_ui("undefined");
 			}
 		}
 	};
