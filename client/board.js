@@ -7,7 +7,7 @@ const board = (function () {
   var cvas; // HTML canvas element
   var W, H; // canvas pixel size
   var X, Y; // canvas logical size
-  var sx, sy; // current coordinates of sprite
+  var sx = null, sy = null; // current coordinates of sprite
 
   var F;    // 2-dim array with cell data
 
@@ -25,6 +25,8 @@ const board = (function () {
 
   var metronom_interval;
   var sprite_state = "stopped"; // "running", "paused", "stopped", "aborted"
+
+  var drag_data = null;
 
   const funwrapper = function funwrapper(callback) {
     return new Promise((resolve, reject) => {
@@ -140,7 +142,8 @@ const board = (function () {
     if (has_block(x1,y1))
       return 2;
     const x0 = sx, y0 = sy;
-    fcell (c_trace, x0, y0);
+    if (x0 && y0)
+      fcell (c_trace, x0, y0);
     fcell (c_sprite,  x1, y1);
     sx = x1;
     sy = y1;
@@ -201,6 +204,60 @@ const board = (function () {
     sprite_state = state;
   }
 
+  const canvas_action = function(evt, cell_action) {
+    const ox = evt.offsetX;
+    const oy = evt.offsetY;
+    const rx = (ox - pad)/(spc + box);
+    const ry = (oy - pad)/(spc + box);
+    //console.log("rx =", rx, "ry = ", ry);
+    if (rx < 0 || ry < 0)
+      console.log("Outside click!");
+    else {
+      const x = Math.floor(rx);
+      const y = Math.floor(ry);
+
+      if (x >= W || y >= H)
+        console.log("Outside click!");
+      else {
+        //console.log("ox - pad - x*(spc + box) =", ox - pad - x*(spc + box),
+        //  "oy - pad - y*(spc + box) =", oy - pad - y*(spc + box));
+        if (ox - pad - x*(spc + box) > box || oy - pad - y*(spc + box) > box)
+          //console.log("Click between cells!");
+          ;
+        else {
+          //console.log("Valid click", 1+x, Y-y);
+          cell_action(1+x, Y-y);
+        }
+      }
+    }
+  }
+
+  const drag_active = function () {
+    return !!drag_data;
+  }
+
+  const drag_initiate = function (x,y) {
+    drag_data = {ox: x, oy: y};
+    console.log("DRAG START", x, y);
+  }
+
+  const drag_move = function (x,y) {
+    if (drag_data && !(drag_data.x == x && drag_data.y == y)) {
+      drag_data.x = x;
+      drag_data.y = y;
+      console.log("DRAG MOVE", x, y);
+    }
+  }
+
+  const drag_drop = function () {
+    if (drag_data && drag_data.x && drag_data.y) {
+      const x = drag_data.x;
+      const y = drag_data.y;
+      console.log("DRAG DROP", x, y);
+    }
+    drag_data = null;
+  }
+
   return {
   	init: function(id, interval, run) {
       // setup canvas
@@ -215,14 +272,42 @@ const board = (function () {
       // initialize periodic wakeup events
       metronom_on (interval);
 
-      let action = this.action;
-      cvas.onclick = function(e){
-        //console.log("x =", e.offsetX, "y =", e.offsetY);
-        action(e.offsetX, e.offsetY);
-      }
+      let predrag = null;
+      cvas.onclick = evt => canvas_action(evt, (x,y) => {
+        predrag = null;
+        flip_block(x,y);
+      });
+      // cvas.onmousedown = evt => canvas_action(evt, (x,y) => {
+      //   if (predrag == null) {
+      //     if (x == sx && y == sy)
+      //       predrag = {x : x, y : y};
+      //   }
+      //   else
+      //     predrag = null;
+      //   //console.log("DOWN", x, y);
+      // });
+      // cvas.onmousemove = evt => canvas_action(evt, (x,y) => {
+      //   if (drag_active())
+      //     drag_move(x,y);
+      //   else if (predrag != null && !(x == predrag.x && y == predrag.y)) {
+      //     drag_initiate(predrag.x, predrag.y);
+      //     drag_move(x,y);
+      //   }
+      //   //console.log("MOVE", x, y);
+      // });
+      // cvas.onmouseup = evt => {
+      //   if (drag_active()) {
+      //     evt.stopPropagation();
+      //     drag_drop();
+      //   }
+      //   evt.stopPropagation();
+      // };
 
-      // temp
-      sx = sy = 1;
+      // initial position
+      if (0 != move_sprite(1,1)) {
+        alert("Error");
+        return;
+      }
 
       // setup Run/Pause/Stop callbacks
       document.getElementById("c_run").onclick = function () {
@@ -290,29 +375,16 @@ const board = (function () {
       return sprite_state == "running" || sprite_state == "paused";
     },
 
-    action: function(ox, oy) {
-      const rx = (ox - pad)/(spc + box);
-      const ry = (oy - pad)/(spc + box);
-      //console.log("rx =", rx, "ry = ", ry);
-      if (rx < 0 || ry < 0)
-        console.log("Outside click!");
-      else {
-        const x = Math.floor(rx);
-        const y = Math.floor(ry);
-
-        if (x >= W || y >= H)
-          console.log("Outside click!");
-        else {
-          //console.log("ox - pad - x*(spc + box) =", ox - pad - x*(spc + box),
-          //  "oy - pad - y*(spc + box) =", oy - pad - y*(spc + box));
-          if (ox - pad - x*(spc + box) > box || oy - pad - y*(spc + box) > box)
-            console.log("Click between cells!");
-          else {
-            //console.log("Valid click", 1+x, Y-y);
-            flip_block(1+x, Y-y);
-          }
+    reset_blocks: function() {
+      for (let x = 1; x <= X; x ++)
+        for (let y = 1; y <= Y; y ++) {
+          const cell = getcell(x,y);
+          const blocked = cell.blocked;
+          delete cell.blocked;
+          delete cell.blocked_ts;
+          if (blocked)
+            draw_cell(x, y);
         }
-      }
     }
   }
 }());
