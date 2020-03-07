@@ -216,7 +216,7 @@ const board = (function () {
       const x = Math.floor(rx);
       const y = Math.floor(ry);
 
-      if (x >= W || y >= H)
+      if (x >= X || y >= Y)
         console.log("Outside click!");
       else {
         //console.log("ox - pad - x*(spc + box) =", ox - pad - x*(spc + box),
@@ -237,15 +237,21 @@ const board = (function () {
   }
 
   const drag_initiate = function (x,y) {
-    drag_data = {ox: x, oy: y};
+    drag_data = {ox: x, oy: y, x: x, y: y};
     console.log("DRAG START", x, y);
   }
 
   const drag_move = function (x,y) {
-    if (drag_data && !(drag_data.x == x && drag_data.y == y)) {
+    if (drag_data &&
+        !(drag_data.x == x && drag_data.y == y) &&
+        !has_block(x,y)) {
+      //console.log(`blank(${drag_data.x},${drag_data.y})`)
+      fcell (c_blank, drag_data.x, drag_data.y);
+      //console.log(`sprite(${x},${y})`)
+      fcell (c_sprite, x, y);
       drag_data.x = x;
       drag_data.y = y;
-      console.log("DRAG MOVE", x, y);
+      //console.log("DRAG MOVE", x, y);
     }
   }
 
@@ -254,6 +260,8 @@ const board = (function () {
       const x = drag_data.x;
       const y = drag_data.y;
       console.log("DRAG DROP", x, y);
+      sx = x;
+      sy = y;
     }
     drag_data = null;
   }
@@ -273,35 +281,41 @@ const board = (function () {
       metronom_on (interval);
 
       let predrag = null;
-      cvas.onclick = evt => canvas_action(evt, (x,y) => {
-        predrag = null;
-        flip_block(x,y);
+      let preclick = null;
+      cvas.onmousedown = evt => canvas_action(evt, (x,y) => {
+        if (predrag == null) {
+          if (x == sx && y == sy)
+            predrag = {x : x, y : y};
+        }
+        else
+          predrag = null;
+
+        if (preclick == null) {
+          if (!(x == sx && y == sy))
+            preclick = {x : x, y : y};
+        }
+        else
+          preclick = null;
       });
-      // cvas.onmousedown = evt => canvas_action(evt, (x,y) => {
-      //   if (predrag == null) {
-      //     if (x == sx && y == sy)
-      //       predrag = {x : x, y : y};
-      //   }
-      //   else
-      //     predrag = null;
-      //   //console.log("DOWN", x, y);
-      // });
-      // cvas.onmousemove = evt => canvas_action(evt, (x,y) => {
-      //   if (drag_active())
-      //     drag_move(x,y);
-      //   else if (predrag != null && !(x == predrag.x && y == predrag.y)) {
-      //     drag_initiate(predrag.x, predrag.y);
-      //     drag_move(x,y);
-      //   }
-      //   //console.log("MOVE", x, y);
-      // });
-      // cvas.onmouseup = evt => {
-      //   if (drag_active()) {
-      //     evt.stopPropagation();
-      //     drag_drop();
-      //   }
-      //   evt.stopPropagation();
-      // };
+      cvas.onmousemove = evt => canvas_action(evt, (x,y) => {
+        if (preclick != null)
+          preclick = null;
+
+        if (drag_active())
+          drag_move(x,y);
+        else if (predrag != null && !(x == predrag.x && y == predrag.y)) {
+          drag_initiate(predrag.x, predrag.y);
+          predrag = null;
+          drag_move(x,y);
+        }
+      });
+      cvas.onmouseup = evt => {
+        if (drag_active()) {
+          drag_drop();
+        }
+        else if (preclick != null)
+          flip_block(preclick.x, preclick.y);
+      };
 
       // initial position
       if (0 != move_sprite(1,1)) {
