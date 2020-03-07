@@ -150,6 +150,14 @@ const board = (function () {
     return 0;
   }
 
+  const move_try = function(x1, y1) {
+    if (x1 < 1 || x1 > X || y1 < 1 || y1 > Y)
+      return 1;
+    if (has_block(x1,y1))
+      return 2;
+    return 0;
+  }
+
   const move_promise = (x1, y1) => funwrapper(() => {
     return move_sprite(x1, y1);
   });
@@ -328,10 +336,12 @@ const board = (function () {
         if (sprite_state == "stopped") {
           wakeup_sprite_active = true;
           set_sprite_state("running");
-          run();
+          // some kind of magic I don't understand
+          (async () => {await run(); set_sprite_state("stopped")})();
         }
         else
           alert("run: sprite_state = '" + sprite_state + "'");
+        console.log("Exited from RUN#onclick");
       }
       document.getElementById("c_pause").onclick = function () {
         if (sprite_state == "running") {
@@ -360,16 +370,13 @@ const board = (function () {
 
       // initiate server handshake
       bserver.handshake();
-
-      // bcontrol.set_server_mode('offline');
-
     },
 
-    move_right: async function () {
+    move_right: function () {
       return move_promise (sx+1, sy);
     },
 
-    move_left: async function () {
+    move_left: function () {
       return move_promise (sx-1, sy);
     },
 
@@ -377,8 +384,24 @@ const board = (function () {
       return move_promise (sx, sy+1);
     },
 
-    move_down: async function () {
+    move_down: function () {
       return move_promise (sx, sy-1);
+    },
+
+    try_right: function () {
+      return move_try (sx+1, sy);
+    },
+
+    try_left: function () {
+      return move_try (sx-1, sy);
+    },
+
+    try_up: function () {
+      return move_try (sx, sy+1);
+    },
+
+    try_down: function () {
+      return move_try (sx, sy-1);
     },
 
     done: function () {
