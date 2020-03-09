@@ -412,7 +412,7 @@ const board = (function () {
       return sprite_state == "running" || sprite_state == "paused";
     },
 
-    reset_blocks: function() {
+    reset_blocks: function () {
       for (let x = 1; x <= X; x ++)
         for (let y = 1; y <= Y; y ++) {
           const cell = getcell(x,y);
@@ -422,6 +422,89 @@ const board = (function () {
           if (blocked)
             draw_cell(x, y);
         }
+    },
+
+    import: function (data) {
+      let ii = data.indexOf(',');
+      const spx = parseInt(data.substring(0,ii));
+      let jj = data.indexOf(',',ii+1);
+      const spy = parseInt(data.substring(ii+1,jj));
+      let dp = jj;
+      let n = null;
+      let e = 0;
+      let buffer = [];
+      const pop = () => {
+        if (e == 0) {
+          let ii;
+          if (buffer.length == 0) {
+            dp ++;
+            if (data[dp] == 'z') {
+              for (ii = dp + 1; '0' <= data[ii] && data[ii] <= '9'; ii ++);
+              const z = parseInt(data.substring(dp + 1, ii))
+              dp = ii-1;
+              for (ii = 0; ii < z; ii ++)
+                buffer.push(0);
+            }
+            else {
+              buffer.push(data.charCodeAt(dp) - 58);
+            }
+          }
+          n = buffer.shift();
+          e = 6;
+        }
+        e --;
+        return (n>>e)%2;
+      }
+
+      for (ii = 0; ii < X * Y; ii ++)
+        if (pop() == 1) {
+          const cell = F[ii];
+          const x = 1 + ii%X;
+          const y = (ii - (x - 1))/X + 1;
+          cell.blocked = !(cell.blocked === true);
+          cell.blocked_ts = (new Date()).valueOf();
+          draw_cell(x, y);
+        }
+
+      move_sprite(spx, spy);
+    },
+
+    export: function () {
+      let x = 0;
+      let res = [];
+      let z = 0;
+      const push = t => {
+        if (t > 0 && z > 0)
+          fin();
+        res.push(String.fromCharCode(58+t));
+      }
+      const fin = () => {
+        if (z > 0) {
+          if (z < 4) {
+            for(let ii = 0; ii < z; ii ++)
+              push(0);
+          }
+          else {
+            res.push('z' + z);
+          }
+          z = 0;
+        }
+      }
+      for (let ii = 0; ii < X * Y || ii%6 == 0; ii ++) {
+        if (ii < X * Y && F[ii].blocked === true) {
+          const ign=57;
+        }
+        x = 2 * x + ((ii < X * Y && F[ii].blocked === true)?1:0);
+        if (ii % 6 == 5) {
+          if (x == 0)
+            z ++;
+          else
+            push(x);
+          x = 0;
+        }
+      }
+      fin();
+      return '' + sx + ',' + sy + ',' + res.join('');
     }
   }
 }());
