@@ -96,6 +96,11 @@ const bcontrol = (function () {
 
 	return {
 		init : function() {
+			document.getElementById("c_save").onclick = function () {
+				document.getElementById("export").innerHTML = board.export();
+		    };
+
+
 			["active", "passive", "offline", "reset"].forEach(m => {
 				document.getElementById("m_" + m).onclick = () =>
 					server_mode_click(m);
