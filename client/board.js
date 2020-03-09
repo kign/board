@@ -424,6 +424,13 @@ const board = (function () {
         }
     },
 
+    pause: function () {
+      if (sprite_state == "running") {
+        wakeup_sprite_active = false;
+        set_sprite_state("paused");
+      }
+    },
+
     import: function (data) {
       let ii = data.indexOf(',');
       const spx = parseInt(data.substring(0,ii));
